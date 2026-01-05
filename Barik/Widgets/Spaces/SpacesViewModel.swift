@@ -4,10 +4,9 @@ import Foundation
 
 class SpacesViewModel: ObservableObject {
     @Published var spaces: [AnySpace] = []
-    private var timer: Timer?
     private var provider: AnySpacesProvider?
-    private var workspaceObservers: [NSObjectProtocol] = []
-    private var debounceWorkItem: DispatchWorkItem?
+    private var accessibilityObserver: AccessibilityObserver?
+    private var timer: Timer?
 
     init() {
         let runningApps = NSWorkspace.shared.runningApplications.compactMap {
@@ -28,74 +27,18 @@ class SpacesViewModel: ObservableObject {
     }
 
     private func startMonitoring() {
-        // Event-based refresh using NSWorkspace notifications
-        let notificationCenter = NSWorkspace.shared.notificationCenter
-        
-        // App activation/deactivation often indicates window focus changes
-        let activateObserver = notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.debouncedRefresh()
+        // Use AccessibilityObserver for push-based focus change detection
+        accessibilityObserver = AccessibilityObserver { [weak self] in
+            self?.loadSpaces()
         }
-        workspaceObservers.append(activateObserver)
         
-        let deactivateObserver = notificationCenter.addObserver(
-            forName: NSWorkspace.didDeactivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.debouncedRefresh()
-        }
-        workspaceObservers.append(deactivateObserver)
-        
-        // Space changes (Mission Control)
-        let spaceObserver = notificationCenter.addObserver(
-            forName: NSWorkspace.activeSpaceDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.debouncedRefresh()
-        }
-        workspaceObservers.append(spaceObserver)
-        
-        // App launch/terminate for new windows
-        let launchObserver = notificationCenter.addObserver(
-            forName: NSWorkspace.didLaunchApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.debouncedRefresh()
-        }
-        workspaceObservers.append(launchObserver)
-        
-        let terminateObserver = notificationCenter.addObserver(
-            forName: NSWorkspace.didTerminateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.debouncedRefresh()
-        }
-        workspaceObservers.append(terminateObserver)
-        
-        // Slow fallback timer for edge cases (window moves within same app, etc.)
-        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) {
+        // Very slow fallback timer (30s) for edge cases like window moves within same app
+        timer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) {
             [weak self] _ in
             self?.loadSpaces()
         }
         
         loadSpaces()
-    }
-    
-    /// Debounced refresh - coalesces multiple rapid refresh calls
-    private func debouncedRefresh() {
-        debounceWorkItem?.cancel()
-        let workItem = DispatchWorkItem { [weak self] in
-            self?.loadSpaces()
-        }
-        debounceWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: workItem)
     }
     
     /// Force an immediate refresh of spaces data
@@ -104,18 +47,14 @@ class SpacesViewModel: ObservableObject {
     }
 
     private func stopMonitoring() {
+        accessibilityObserver?.stopObserving()
+        accessibilityObserver = nil
         timer?.invalidate()
         timer = nil
-        
-        let notificationCenter = NSWorkspace.shared.notificationCenter
-        for observer in workspaceObservers {
-            notificationCenter.removeObserver(observer)
-        }
-        workspaceObservers.removeAll()
     }
 
     private func loadSpaces() {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .userInitiated).async {
             guard let provider = self.provider,
                 let spaces = provider.getSpacesWithWindows()
             else {

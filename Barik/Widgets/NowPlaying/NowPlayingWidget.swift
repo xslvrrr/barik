@@ -70,9 +70,10 @@ struct NowPlayingContent: View {
                 .padding(.horizontal, foregroundHeight < 45 ? 8 : 12)
                 .frame(height: foregroundHeight < 45 ? 30 : 38)
                 .background(configManager.config.experimental.foreground.widgetsBackground.blur)
-                .clipShape(Capsule())
+                .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                 .overlay(
-                    Capsule().stroke(Color.noActive, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .stroke(Color.noActive, lineWidth: 1)
                 )
             }
         }
@@ -158,15 +159,11 @@ struct SongTextView: View {
         VStack(alignment: .leading, spacing: -1) {
             if foregroundHeight >= 30 {
                 Text(song.title)
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .fontWeight(.medium)
                     .padding(.trailing, 2)
-                Text(song.artist)
-                    .opacity(0.8)
-                    .font(.system(size: 10))
-                    .padding(.trailing, 2)
             } else {
-                Text(song.artist + " — " + song.title)
+                Text(song.title)
                     .font(.system(size: 12))
             }
         }
