@@ -64,7 +64,7 @@ private struct SpaceView: View {
                  ? Color.active
                  : isHovered ? Color.noActive : Color.noActive)
         )
-        .clipShape(RoundedRectangle(cornerRadius: foregroundHeight < 30 ? 0 : 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: foregroundHeight < 30 ? 0 : 15, style: .continuous))
         .shadow(color: .shadow, radius: foregroundHeight < 30 ? 0 : 2)
         .transition(.blurReplace)
         .onTapGesture {

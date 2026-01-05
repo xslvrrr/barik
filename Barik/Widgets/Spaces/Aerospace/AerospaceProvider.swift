@@ -8,7 +8,9 @@ class AerospaceSpacesProvider: SpacesProvider, SwitchableSpacesProvider {
         guard var spaces = fetchSpaces(), let windows = fetchWindows() else {
             return nil
         }
-        if let focusedSpace = fetchFocusedSpace() {
+        // Cache focusedSpace to avoid duplicate CLI call
+        let focusedSpace = fetchFocusedSpace()
+        if let focusedSpace = focusedSpace {
             for i in 0..<spaces.count {
                 spaces[i].isFocused = (spaces[i].id == focusedSpace.id)
             }
@@ -26,7 +28,8 @@ class AerospaceSpacesProvider: SpacesProvider, SwitchableSpacesProvider {
                     space.windows.append(mutableWindow)
                     spaceDict[ws] = space
                 }
-            } else if let focusedSpace = fetchFocusedSpace() {
+            } else if let focusedSpace = focusedSpace {
+                // Reuse cached focusedSpace instead of calling fetchFocusedSpace() again
                 if var space = spaceDict[focusedSpace.id] {
                     space.windows.append(mutableWindow)
                     spaceDict[focusedSpace.id] = space

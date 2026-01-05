@@ -7,6 +7,7 @@ class SpacesViewModel: ObservableObject {
     private var timer: Timer?
     private var provider: AnySpacesProvider?
     private var workspaceObservers: [NSObjectProtocol] = []
+    private var debounceWorkItem: DispatchWorkItem?
 
     init() {
         let runningApps = NSWorkspace.shared.runningApplications.compactMap {
@@ -36,7 +37,7 @@ class SpacesViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSpaces()
+            self?.debouncedRefresh()
         }
         workspaceObservers.append(activateObserver)
         
@@ -45,7 +46,7 @@ class SpacesViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSpaces()
+            self?.debouncedRefresh()
         }
         workspaceObservers.append(deactivateObserver)
         
@@ -55,7 +56,7 @@ class SpacesViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSpaces()
+            self?.debouncedRefresh()
         }
         workspaceObservers.append(spaceObserver)
         
@@ -65,7 +66,7 @@ class SpacesViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSpaces()
+            self?.debouncedRefresh()
         }
         workspaceObservers.append(launchObserver)
         
@@ -74,7 +75,7 @@ class SpacesViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.loadSpaces()
+            self?.debouncedRefresh()
         }
         workspaceObservers.append(terminateObserver)
         
@@ -85,6 +86,16 @@ class SpacesViewModel: ObservableObject {
         }
         
         loadSpaces()
+    }
+    
+    /// Debounced refresh - coalesces multiple rapid refresh calls
+    private func debouncedRefresh() {
+        debounceWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.loadSpaces()
+        }
+        debounceWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: workItem)
     }
     
     /// Force an immediate refresh of spaces data
