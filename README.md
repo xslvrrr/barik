@@ -1,4 +1,10 @@
-**NOTICE**: This is a FORK of the original version, this version fixes the Aerospace energy impact issues for the most part, you will likely still see spikes in energy impact when moving or switching windows. That is the only remaining issue, the idle energy impact has averaged around 2 on my machine, which matches typical Aerospace performance.
+**NOTICE**: This is a FORK of the original version, this version fixes the Aerospace energy impact issues for the most part, you will likely still see spikes in energy impact when moving or switching windows which are still a tenth of prior energy impact spikes. That is the only remaining issue, the idle energy impact has averaged around 2 on my machine, which matches typical Aerospace performance.
+
+**CHANGES:**
+- Aerospace energy impect fixes.
+- Rounding errors fixed (borders were pill shaped rather than being rounded corners).
+- Minor performance improvements on widget popups (insignificant).
+- Now playing widget matches styling of all other widgets, arguably worse but I prefer it to not be out of place.
 
 ----
 
