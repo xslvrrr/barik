@@ -1,4 +1,4 @@
-**NOTICE**: Unfortunately, I don’t have much free time to actively maintain this project. If you like the project but are not satisfied with its current state, you can explore the many forks or create your own. Even if you’re unfamiliar with **Swift**, tools like **Claude Code** and **Codex** can effectively help implement projects like this. This is a great opportunity to tailor **barik** to your needs and make it exactly the way you’d like.
+**NOTICE**: This is a FORK of the original version, this version fixes the Aerospace energy impact issues for the most part, you will likely still see spikes in energy impact when moving or switching windows. That is the only remaining issue, the idle energy impact has averaged around 2 on my machine, which matches typical Aerospace performance.
 
 ----
 
