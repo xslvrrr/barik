@@ -33,12 +33,11 @@ struct MenuBarPopupView<Content: View>: View {
         ZStack(alignment: .topTrailing) {
             content
                 .background(Color.black)
-                .cornerRadius(((1.0 - animationValue) * 1) + 40)
+                .cornerRadius(40)
                 .padding(.top, foregroundHeight + 5)
                 .offset(x: computedOffset, y: computedYOffset)
                 .shadow(radius: 30)
-                .blur(radius: (1.0 - (0.1 + 0.9 * animationValue)) * 20)
-                .scaleEffect(x: 0.2 + 0.8 * animationValue, y: animationValue)
+                .scaleEffect(0.9 + 0.1 * animationValue)
                 .opacity(animationValue)
                 .transaction { transaction in
                     if isHideAnimation {

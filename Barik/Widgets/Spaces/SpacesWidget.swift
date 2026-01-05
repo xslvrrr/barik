@@ -12,7 +12,7 @@ struct SpacesWidget: View {
                 SpaceView(space: space)
             }
         }
-        .experimentalConfiguration(horizontalPadding: 5, cornerRadius: 10)
+        .experimentalConfiguration(horizontalPadding: 5, cornerRadius: 15)
         .animation(.smooth(duration: 0.3), value: viewModel.spaces)
         .foregroundStyle(Color.foreground)
         .environmentObject(viewModel)

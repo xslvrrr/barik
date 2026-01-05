@@ -6,6 +6,7 @@ class SpacesViewModel: ObservableObject {
     @Published var spaces: [AnySpace] = []
     private var timer: Timer?
     private var provider: AnySpacesProvider?
+    private var workspaceObservers: [NSObjectProtocol] = []
 
     init() {
         let runningApps = NSWorkspace.shared.runningApplications.compactMap {
@@ -26,16 +27,80 @@ class SpacesViewModel: ObservableObject {
     }
 
     private func startMonitoring() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
+        // Event-based refresh using NSWorkspace notifications
+        let notificationCenter = NSWorkspace.shared.notificationCenter
+        
+        // App activation/deactivation often indicates window focus changes
+        let activateObserver = notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadSpaces()
+        }
+        workspaceObservers.append(activateObserver)
+        
+        let deactivateObserver = notificationCenter.addObserver(
+            forName: NSWorkspace.didDeactivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadSpaces()
+        }
+        workspaceObservers.append(deactivateObserver)
+        
+        // Space changes (Mission Control)
+        let spaceObserver = notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadSpaces()
+        }
+        workspaceObservers.append(spaceObserver)
+        
+        // App launch/terminate for new windows
+        let launchObserver = notificationCenter.addObserver(
+            forName: NSWorkspace.didLaunchApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadSpaces()
+        }
+        workspaceObservers.append(launchObserver)
+        
+        let terminateObserver = notificationCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadSpaces()
+        }
+        workspaceObservers.append(terminateObserver)
+        
+        // Slow fallback timer for edge cases (window moves within same app, etc.)
+        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) {
             [weak self] _ in
             self?.loadSpaces()
         }
+        
+        loadSpaces()
+    }
+    
+    /// Force an immediate refresh of spaces data
+    func refreshNow() {
         loadSpaces()
     }
 
     private func stopMonitoring() {
         timer?.invalidate()
         timer = nil
+        
+        let notificationCenter = NSWorkspace.shared.notificationCenter
+        for observer in workspaceObservers {
+            notificationCenter.removeObserver(observer)
+        }
+        workspaceObservers.removeAll()
     }
 
     private func loadSpaces() {
@@ -59,12 +124,20 @@ class SpacesViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async {
             self.provider?.focusSpace(
                 spaceId: space.id, needWindowFocus: needWindowFocus)
+            // Immediate refresh after user interaction
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.refreshNow()
+            }
         }
     }
 
     func switchToWindow(_ window: AnyWindow) {
         DispatchQueue.global(qos: .userInitiated).async {
             self.provider?.focusWindow(windowId: String(window.id))
+            // Immediate refresh after user interaction
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.refreshNow()
+            }
         }
     }
 }

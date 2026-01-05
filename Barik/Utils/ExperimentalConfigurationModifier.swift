@@ -21,7 +21,8 @@ private struct ExperimentalConfigurationModifier: ViewModifier {
                     .cornerRadius(foregroundHeight < 30 ? 0 : cornerRadius)
                     .overlay(
                         foregroundHeight < 30 ? nil :
-                            Capsule().stroke(Color.noActive, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .stroke(Color.noActive, lineWidth: 1)
                     )
             }
         }.scaleEffect(foregroundHeight < 25 ? 0.9 : 1, anchor: .leading)
